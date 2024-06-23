@@ -1,4 +1,5 @@
 apply plugin: "com.android.application"
+apply plugin: 'com.google.gms.google-services'
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
@@ -107,6 +108,15 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation platform('com.google.firebase:firebase-bom:33.1.0')
+    implementation 'com.google.firebase:firebase-analytics:17.3.0'
+       implementation project(':react-native-push-notification')
+
+
+       implementation 'com.google.firebase:firebase-messaging:23.0.0' // or higher
+implementation 'com.google.firebase:firebase-analytics:19.0.0' // or higher
+implementation "com.google.android.gms:play-services-base:17.5.0"
+implementation "com.google.android.gms:play-services-basement:17.6.0"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
