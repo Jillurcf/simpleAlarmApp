@@ -64,13 +64,43 @@ const App = () => {
       },
     );
 
+
+    // Handle incoming notifications while app is in foreground
+    // PushNotification.addEventListener('notification', handleNotification);
       
     return () => {
             if (sound) {
         sound.release();
       }
+      PushNotification.removeEventListener('notification', handleNotification);
     };
   }, []);
+
+  const handleNotification = notification => {
+    // display popup or take action based on the notification
+    if(notification.channelId === 'alarm-channel' && notification.userInfo.action === 'PLAY_ALARM'){
+      showAlarmPopup()
+    }
+  }
+
+  const showAlarmPopup= () => {
+    // display modal or alert
+    Alert.alert(
+      'Alarm',
+      'wake up It is time to start your day',
+      [
+        {
+          text: "Cancel Alarm",
+          onPress: cancelAlarm,
+          style: 'cancel',
+        },
+      ],
+      {cancelable: false}
+    );
+    playSound();
+    setPlayVideo(true)
+    setAlarmSet(true)
+  }
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
