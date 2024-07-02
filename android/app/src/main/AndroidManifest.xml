@@ -28,6 +28,16 @@
         android:theme="@style/AppTheme">
 <service android:name="com.alarmapp.backgroundService" />
 <service
+    android:name=".YourForegroundService"
+    android:enabled="true"
+    android:exported="false" />
+
+<service
+  android:name=".AlarmService"
+  android:enabled="true"
+  android:exported="false" />
+
+<service
  android:name=".BackgroundService"
  android:enabled="true"
  android.exported="false"

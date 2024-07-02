@@ -15,10 +15,8 @@ import Sound from 'react-native-sound';
 import Video from 'react-native-video';
 import moment from 'moment-timezone';
 import BackgroundTimer from 'react-native-background-timer';
+import RNForegroundService from '@supersami/rn-foreground-service';
 
-
-// import BackgroundService from './BackgroundService';
-// Ensure the task is registered in your index.js or App.js
 
 const ScheduleVideo = require('./assets/appVideo.mp4');
 const {width, height} = Dimensions.get('window');
@@ -63,7 +61,13 @@ const App = () => {
         }
       },
     );
-
+ // Configure push notification
+ PushNotification.configure({
+  onNotification: function (notification) {
+    handleNotification(notification)
+  }
+ 
+});
 
     // Handle incoming notifications while app is in foreground
     // PushNotification.addEventListener('notification', handleNotification);
@@ -72,7 +76,7 @@ const App = () => {
             if (sound) {
         sound.release();
       }
-      PushNotification.removeEventListener('notification', handleNotification);
+      // PushNotification.removeEventListener('notification', handleNotification);
     };
   }, []);
 
@@ -130,8 +134,8 @@ const App = () => {
     }
     return true;
   };
-  if (alarmSet) {
-  }
+  // if (alarmSet) {
+  // }
 
   const scheduleNotification = async () => {
     const permissionGranted = await requestAlarmPermission();
@@ -159,6 +163,15 @@ const App = () => {
       userInfo: {action: 'PLAY_ALARM'},
     });
 
+    // strat foreground service
+    if(Platform.OS === 'android') {
+      RNForegroundService.start({
+        id:1,
+        title: 'Alarm Service',
+        message: 'Running',
+        vibration: false
+      });
+    }
     // Calculate delay for playing sound
     const now = moment().tz('Asia/Dhaka');
     const delayInMillis = notificationMoment.diff(now);
@@ -200,6 +213,9 @@ const App = () => {
         sound.stop(() => {
           console.log('sound stop');
         });
+      }
+      if(Platform.OS === 'android') {
+        RNForegroundService.stop();
       }
     }
   };
