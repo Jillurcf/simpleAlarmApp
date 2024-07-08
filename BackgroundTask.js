@@ -1,22 +1,20 @@
-// BackgroundTask.js
-import Sound from 'react-native-sound';
-import PushNotification from 'react-native-push-notification';
+// // BackgroundTask.js
 
-const BackgroundTask = async () => {
-  // Load and play sound
-  const alarmSound = new Sound('alarm.mp3', Sound.MAIN_BUNDLE, (error) => {
-    if (error) {
-      console.log('Failed to load sound', error);
-      return;
-    }
-    alarmSound.play((success) => {
-      if (success) {
-        console.log('Sound played successfully');
-      } else {
-        console.log('Sound playback failed');
-      }
-    });
-  });
-};
+// import BackgroundTask from 'react-native-background-task';
 
-export default BackgroundTask;
+// // Register a background task
+// BackgroundTask.define(async () => {
+//   // Your background task logic here
+//   console.log("Running background task...");
+
+//   // Make sure to call `BackgroundTask.finish()` to let the OS know the task is complete
+//   BackgroundTask.finish();
+// });
+
+// // Optional: Set up a periodic task (runs approximately every 15 minutes)
+// BackgroundTask.schedule({
+//   period: 900, // 15 minutes in seconds (minimum allowed is 15 minutes)
+// });
+
+// // Start the background task (optional if using periodic task)
+// BackgroundTask.start();

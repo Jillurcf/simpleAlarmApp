@@ -27,6 +27,7 @@
         android:allowBackup="false"
         android:theme="@style/AppTheme">
 <service android:name="com.alarmapp.backgroundService" />
+
 <service
     android:name=".YourForegroundService"
     android:enabled="true"
@@ -47,7 +48,7 @@
                    android:value="true"/>
         <meta-data android:name="com.dieam.reactnativepushnotification.notification_color"
                    android:resource="@color/white"/>
-        
+         <receiver android:name=".AlarmReceiver" />
         <receiver
             android:enabled="true"
             android:exported="true"

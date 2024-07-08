@@ -11,24 +11,35 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage; // Import the package
+import com.alarmapp.AlarmModule;
+import com.alarmapp.AlarmReceiver;
 
-
+ import com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService; // <- Add this import
 
 
 
 class MainApplication : Application(), ReactApplication {
 
+
+
+
+ 
   override val reactNativeHost: ReactNativeHost =
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
               // Packages that cannot be autolinked yet can be added manually here, for example:
-            // add(MyReactNativePackage())
+           //  add(MyReactNativePackage())
+           // new AlarmPackage()
              
             }  
 
     
 
+
+
+
+  
 
         override fun getJSMainModuleName(): String = "index"
 
@@ -49,4 +60,7 @@ class MainApplication : Application(), ReactApplication {
       load()
     }
   }
+
+
+
 }

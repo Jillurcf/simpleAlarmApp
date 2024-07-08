@@ -1,4 +1,4 @@
-package com.yourappname;
+package com.alarmapp;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;

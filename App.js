@@ -16,6 +16,10 @@ import Video from 'react-native-video';
 import moment from 'moment-timezone';
 import BackgroundTimer from 'react-native-background-timer';
 import RNForegroundService from '@supersami/rn-foreground-service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeModules } from 'react-native';
+
+
 
 
 const ScheduleVideo = require('./assets/appVideo.mp4');
@@ -61,50 +65,59 @@ const App = () => {
         }
       },
     );
- // Configure push notification
- PushNotification.configure({
-  onNotification: function (notification) {
-    handleNotification(notification)
-  }
- 
-});
+    // Configure push notification
+    PushNotification.configure({
+      onNotification: function (notification) {
+        handleNotification(notification);
+      },
+      popInitialNotification: true,
+      requestAlarmPermission: Platform.OS === 'ios',
+    });
 
     // Handle incoming notifications while app is in foreground
-    // PushNotification.addEventListener('notification', handleNotification);
-      
+   
+    loadAlarmSchedule();
     return () => {
-            if (sound) {
+      if (sound) {
         sound.release();
       }
-      // PushNotification.removeEventListener('notification', handleNotification);
+     
+    
     };
   }, []);
 
   const handleNotification = notification => {
     // display popup or take action based on the notification
-    if(notification.channelId === 'alarm-channel' && notification.userInfo.action === 'PLAY_ALARM'){
-      showAlarmPopup()
+    if (
+      notification.channelId === 'alarm-channel' &&
+      notification.userInfo.action === 'PLAY_ALARM'
+    ) {
+      showAlarmPopup();
     }
-  }
-
-  const showAlarmPopup= () => {
+  };
+  
+   
+  // setAlarm();
+  
+  
+  const showAlarmPopup = () => {
     // display modal or alert
     Alert.alert(
       'Alarm',
       'wake up It is time to start your day',
       [
         {
-          text: "Cancel Alarm",
+          text: 'Cancel Alarm',
           onPress: cancelAlarm,
           style: 'cancel',
         },
       ],
-      {cancelable: false}
+      {cancelable: false},
     );
     playSound();
-    setPlayVideo(true)
-    setAlarmSet(true)
-  }
+    setPlayVideo(true);
+    setAlarmSet(true);
+  };
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -134,9 +147,45 @@ const App = () => {
     }
     return true;
   };
-  // if (alarmSet) {
-  // }
+ 
+// dsdsdldsdflddfjle
+// const startAlarmService = async () => {
+//   if (Platform.OS === 'android') {
+//     await BackgroundService.start(
+//       {
+//         taskName: 'AlarmService',
+//         taskTitle: 'Alarm Service',
+//         taskDesc: 'Your alarm is running in the background',
+//         taskIcon: {
+//           name: 'ic_notification',
+//           type: 'mipmap',
+//         },
+//         linkingURI: 'alarmapp://home', // Adjust this to your app's linking URI
+//       },
+//       async () => {
+//         // Your alarm logic here
+//         // For example, play the alarm sound using a library like react-native-sound
+//         if (sound) {
+//           sound.play((success) => {
+//             if (success) {
+//               console.log('Sound played successfully');
+//             } else {
+//               console.log('Sound playback failed');
+//             }
+//           });
+//         } else {
+//           console.log('Sound object is null');
+//         }
+//       }
+//     );
+//   }
+// };
 
+
+
+
+
+ 
   const scheduleNotification = async () => {
     const permissionGranted = await requestAlarmPermission();
     if (!permissionGranted) {
@@ -151,8 +200,18 @@ const App = () => {
     const notificationMoment = moment(date).tz('Asia/Dhaka');
     const notificationDate = notificationMoment.toDate();
 
+    // Save Schedule date to AsyncStorage
+    try {
+      await AsyncStorage.setItem(
+        'alarmSchedule',
+        notificationDate.toString(),
+      );
+      console.log('AlarmSchedule:', notificationDate.toString());
+    } catch (error) {
+      console.error('Error saving alarm schedule:', error);
+    }
+
     PushNotification.localNotificationSchedule({
-      
       channelId: 'alarm-channel',
       title: 'Alarm',
       message: 'Wake up! It is time to start your day',
@@ -163,13 +222,19 @@ const App = () => {
       userInfo: {action: 'PLAY_ALARM'},
     });
 
+   // Start foreground service on Android
+  //  if (Platform.OS === 'android') {
+  //   await startAlarmService();
+  // }
+
+
     // strat foreground service
-    if(Platform.OS === 'android') {
+    if (Platform.OS === 'android') {
       RNForegroundService.start({
-        id:1,
+        id: 1,
         title: 'Alarm Service',
         message: 'Running',
-        vibration: false
+        vibration: false,
       });
     }
     // Calculate delay for playing sound
@@ -201,8 +266,11 @@ const App = () => {
   };
 
   const handleSetAlarm = async () => {
+  
     await scheduleNotification();
+    // AlarmModule.setAlarm();
   };
+
   const cancelAlarm = async () => {
     setAlarmSet(false);
     if (timeOutId) {
@@ -214,9 +282,35 @@ const App = () => {
           console.log('sound stop');
         });
       }
-      if(Platform.OS === 'android') {
+      if (Platform.OS === 'android') {
         RNForegroundService.stop();
       }
+    }
+    PushNotification.cancellAllLocalNotifications();
+
+    // Remove schedule date from AsyncStorage
+    try {
+      await AsyncStorage.removeItem('alarmSchedule');
+      console.log('Alarm schedule removed from local storage');
+    } catch (error) {
+      console.error(
+        'eroor removing alarm sehcedule from local storage:',
+        error,
+      );
+    }
+  };
+
+  const loadAlarmSchedule = async () => {
+    try {
+      const storedSchedule = await AsyncStorage.getItem('alarmSchedule');
+      if (storedSchedule) {
+        const scheduleDate = new Date(storedSchedule);
+        setDate(scheduleDate);
+        setAlarmSet(true);
+        console.log('loadded alarm schedule from local storage:');
+      }
+    } catch (error) {
+      console.error('error loading alarm schedule from local storage:', error);
     }
   };
 
@@ -283,3 +377,5 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
