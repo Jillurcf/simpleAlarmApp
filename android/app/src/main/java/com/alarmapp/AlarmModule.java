@@ -14,13 +14,12 @@ import com.facebook.react.bridge.Callback;
 import java.util.Calendar;
 
 public class AlarmModule extends ReactContextBaseJavaModule {
-    private AlarmManager alarmMgr;
-    private PendingIntent alarmIntent;
+    private static final String TAG = "AlarmModule";
     private ReactApplicationContext reactContext;
 
-    public AlarmModule(ReactApplicationContext reactContext) {
-        super(reactContext);
-        this.reactContext = reactContext;
+    public AlarmModule(ReactApplicationContext context) {
+        super(context);
+        this.reactContext = context;
     }
 
     @Override
@@ -29,24 +28,15 @@ public class AlarmModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setAlarm() {
-        alarmMgr = (AlarmManager)reactContext.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(reactContext, AlarmReceiver.class);
-        alarmIntent = PendingIntent.getBroadcast(reactContext, 0, intent, 0);
-
-        // Set the alarm to start at 8:30 a.m.
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 8);
-        calendar.set(Calendar.MINUTE, 30);
-
-        // setRepeating() lets you specify a precise custom interval--in this case,
-        // 20 minutes.
-        alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                1000 * 60 * 20, alarmIntent);
-
-
-              
+    public void setAlarm(int seconds) {
+        Intent alarmIntent = new Intent(reactContext, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(reactContext, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) reactContext.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + seconds * 1000, pendingIntent);
+        }
     }
 
 }
+
+

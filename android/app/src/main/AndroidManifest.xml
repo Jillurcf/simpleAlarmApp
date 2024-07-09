@@ -1,67 +1,70 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.alarmapp">
 
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+       <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.BACKGOROUND_SERVICE" />
-
-
-
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.SET_ALARM) != PackageManager.PERMISSION_GRANTED) {
-    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SET_ALARM}, REQUEST_CODE);
-}
-
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".MainApplication"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:allowBackup="false"
+        android:allowBackup="true"
         android:theme="@style/AppTheme">
-<service android:name="com.alarmapp.backgroundService" />
 
-<service
-    android:name=".YourForegroundService"
-    android:enabled="true"
-    android:exported="false" />
+        <!-- Declare your services -->
+        
+        <service android:name=".ForegroundService" />
+        <service android:name=".YourForegroundService" android:enabled="true" android:exported="false" />
+        <service android:name=".AlarmService" android:enabled="true" android:exported="false" />
+       <service
+  android:name=".BackgroundService"
+  android:foregroundServiceType="location|dataSync|camera"
+  android:exported="true"/>android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".AlarmForegroundService"
+            android:foregroundServiceType="mediaPlayback" />
 
-<service
-  android:name=".AlarmService"
-  android:enabled="true"
-  android:exported="false" />
+        <!-- Push notification configuration -->
+        <meta-data android:name="com.dieam.reactnativepushnotification.notification_foreground" android:value="true" />
+        <meta-data android:name="com.dieam.reactnativepushnotification.notification_color" android:resource="@color/white" />
 
-<service
- android:name=".BackgroundService"
- android:enabled="true"
- android.exported="false"
- android:permission="android.permission.BIND_JOB_SERVICE"
-  />
-        <meta-data android:name="com.dieam.reactnativepushnotification.notification_foreground"
-                   android:value="true"/>
-        <meta-data android:name="com.dieam.reactnativepushnotification.notification_color"
-                   android:resource="@color/white"/>
-         <receiver android:name=".AlarmReceiver" />
+        <!-- Alarm receiver -->
+        <receiver android:name=".AlarmReceiver" android:exported="true" />
+        
+        <!-- Boot receiver to reschedule alarms after reboot -->
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Push notification boot event receiver -->
         <receiver
+            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"
             android:enabled="true"
             android:exported="true"
-            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <service android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
-                 android:exported="true"/>
+      
 
+        <!-- Push notification listener service -->
+        <service android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
+            android:exported="true"/>
+
+        <!-- Main activity -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"

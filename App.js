@@ -17,13 +17,14 @@ import moment from 'moment-timezone';
 import BackgroundTimer from 'react-native-background-timer';
 import RNForegroundService from '@supersami/rn-foreground-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeModules } from 'react-native';
-
-
-
+import {NativeModules} from 'react-native';
+console.log("21, NM", NativeModules)
 
 const ScheduleVideo = require('./assets/appVideo.mp4');
 const {width, height} = Dimensions.get('window');
+
+const {AlarmSchedulerModule} = NativeModules;
+console.log("26, ===alarmScheduler", AlarmSchedulerModule)
 
 const App = () => {
   const [date, setDate] = useState(new Date());
@@ -65,24 +66,65 @@ const App = () => {
         }
       },
     );
-    // Configure push notification
+
     PushNotification.configure({
-      onNotification: function (notification) {
+      onNotification: function(notification) {
         handleNotification(notification);
+        console.log('Received Notification:', notification);
+        if (notification.userInfo && notification.userInfo.action === 'PLAY_ALARM') {
+          showAlarmPopup()
+          console.log('Handling PLAY_ALARM action');
+          Alert.alert(
+            'Alarm',
+            'It is time to wake up!',
+            [
+              {
+                text: 'Dismiss',
+                onPress: () => console.log('Dismissed alarm'),
+                style: 'cancel',
+              },
+            ],
+            { cancelable: false }
+          );
+        }
+        notification.finish(PushNotification.FetchResult.NoData);
       },
+      requestPermissions: Platform.OS === 'ios',
       popInitialNotification: true,
-      requestAlarmPermission: Platform.OS === 'ios',
     });
+    
+    RNForegroundService.start({
+      id: 1,
+      title: 'Alarm Service',
+      message: 'Running',
+      vibration: false,
+    });
+    
+
+
+  
+    // Configure push notification
+    // PushNotification.configure({
+    //   onNotification: function (notification) {
+    //     handleNotification(notification);
+    //   },
+    //   popInitialNotification: true,
+    //   requestAlarmPermission: Platform.OS === 'ios',
+    // });
+    // Configure push notification
+    // PushNotification.configure({
+    //   onNotification: handleNotification,
+    //   popInitialNotification: true,
+    //   requestAlarmPermission: Platform.OS === 'ios',
+    // });
 
     // Handle incoming notifications while app is in foreground
-   
+
     loadAlarmSchedule();
     return () => {
       if (sound) {
         sound.release();
       }
-     
-    
     };
   }, []);
 
@@ -90,16 +132,14 @@ const App = () => {
     // display popup or take action based on the notification
     if (
       notification.channelId === 'alarm-channel' &&
-      notification.userInfo.action === 'PLAY_ALARM'
+      notification.userInfo?.action === 'PLAY_ALARM'
     ) {
       showAlarmPopup();
     }
   };
-  
-   
+
   // setAlarm();
-  
-  
+
   const showAlarmPopup = () => {
     // display modal or alert
     Alert.alert(
@@ -147,45 +187,7 @@ const App = () => {
     }
     return true;
   };
- 
-// dsdsdldsdflddfjle
-// const startAlarmService = async () => {
-//   if (Platform.OS === 'android') {
-//     await BackgroundService.start(
-//       {
-//         taskName: 'AlarmService',
-//         taskTitle: 'Alarm Service',
-//         taskDesc: 'Your alarm is running in the background',
-//         taskIcon: {
-//           name: 'ic_notification',
-//           type: 'mipmap',
-//         },
-//         linkingURI: 'alarmapp://home', // Adjust this to your app's linking URI
-//       },
-//       async () => {
-//         // Your alarm logic here
-//         // For example, play the alarm sound using a library like react-native-sound
-//         if (sound) {
-//           sound.play((success) => {
-//             if (success) {
-//               console.log('Sound played successfully');
-//             } else {
-//               console.log('Sound playback failed');
-//             }
-//           });
-//         } else {
-//           console.log('Sound object is null');
-//         }
-//       }
-//     );
-//   }
-// };
 
-
-
-
-
- 
   const scheduleNotification = async () => {
     const permissionGranted = await requestAlarmPermission();
     if (!permissionGranted) {
@@ -202,10 +204,7 @@ const App = () => {
 
     // Save Schedule date to AsyncStorage
     try {
-      await AsyncStorage.setItem(
-        'alarmSchedule',
-        notificationDate.toString(),
-      );
+      await AsyncStorage.setItem('alarmSchedule', notificationDate.toString());
       console.log('AlarmSchedule:', notificationDate.toString());
     } catch (error) {
       console.error('Error saving alarm schedule:', error);
@@ -222,12 +221,6 @@ const App = () => {
       userInfo: {action: 'PLAY_ALARM'},
     });
 
-   // Start foreground service on Android
-  //  if (Platform.OS === 'android') {
-  //   await startAlarmService();
-  // }
-
-
     // strat foreground service
     if (Platform.OS === 'android') {
       RNForegroundService.start({
@@ -240,6 +233,7 @@ const App = () => {
     // Calculate delay for playing sound
     const now = moment().tz('Asia/Dhaka');
     const delayInMillis = notificationMoment.diff(now);
+    console.log('delayInMilis++++++++++++++++++++++++', delayInMillis);
 
     // Schedule playing sound after delay
     const id = BackgroundTimer.setTimeout(() => {
@@ -249,6 +243,8 @@ const App = () => {
     setTimeOutId(id);
     setAlarmSet(true);
     console.log('Notification Date:', notificationDate);
+    return delayInMillis;
+    // return notificationDate
   };
 
   const playSound = () => {
@@ -266,9 +262,10 @@ const App = () => {
   };
 
   const handleSetAlarm = async () => {
-  
-    await scheduleNotification();
+    const delay = await scheduleNotification();
+    console.log('=====================> Delay', delay);
     // AlarmModule.setAlarm();
+    AlarmSchedulerModule.scheduleAlarm(delay);
   };
 
   const cancelAlarm = async () => {
@@ -287,7 +284,7 @@ const App = () => {
       }
     }
     PushNotification.cancellAllLocalNotifications();
-
+    AlarmSchedulerModule.cancelAlarm();
     // Remove schedule date from AsyncStorage
     try {
       await AsyncStorage.removeItem('alarmSchedule');
@@ -377,5 +374,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-
-

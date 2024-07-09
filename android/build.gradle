@@ -48,6 +48,9 @@ buildscript {
         targetSdkVersion = 30
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.22"
+
+
+        
         RNVUseExoplayerIMA = System.getenv("RNV_SAMPLE_ENABLE_ADS") ?: true
     }
     repositories {
