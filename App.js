@@ -161,7 +161,7 @@ const App = () => {
 
     try {
       await AsyncStorage.setItem('alarmSchedule', notificationDate.toString());
-      console.log('AlarmSchedule:', notificationDate.toString());
+      console.log('164, ++AlarmSchedule:', notificationDate.toString());
     } catch (error) {
       console.error('Error saving alarm schedule:', error);
     }
@@ -197,6 +197,7 @@ const App = () => {
     setAlarmSet(true);
     console.log('Notification Date:', notificationDate);
     return delayInMillis;
+    // return notificationDate;
   };
 
   const playSound = () => {
@@ -215,7 +216,11 @@ const App = () => {
 
   const handleSetAlarm = async () => {
     const delay = await scheduleNotification();
-    AlarmScheduler.scheduleAlarm(delay, 'Wake up! It is time to start your day', showAlarmPopup());
+ const currentDate = new Date();
+ console.log("currentDate", currentDate)
+ const timeInMillis = currentDate.getTime() + delay;
+ console.log("", timeInMillis)
+    AlarmScheduler.scheduleAlarm(timeInMillis, 'Wake up! It is time to start your day');
   };
 
   const cancelAlarm = async () => {
