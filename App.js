@@ -18,13 +18,12 @@ import BackgroundTimer from 'react-native-background-timer';
 import RNForegroundService from '@supersami/rn-foreground-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NativeModules} from 'react-native';
-console.log("21, NM", NativeModules)
 
 const ScheduleVideo = require('./assets/appVideo.mp4');
 const {width, height} = Dimensions.get('window');
 
-const {AlarmSchedulerModule} = NativeModules;
-console.log("26, ===alarmScheduler", AlarmSchedulerModule)
+const {AlarmScheduler} = NativeModules;
+console.log("26", AlarmScheduler)
 
 const App = () => {
   const [date, setDate] = useState(new Date());
@@ -35,7 +34,6 @@ const App = () => {
   const [timeOutId, setTimeOutId] = useState(null);
 
   useEffect(() => {
-    // Load the sound file
     const alarmSound = new Sound('alarm.mp3', Sound.MAIN_BUNDLE, error => {
       if (error) {
         console.log('Failed to load sound', error);
@@ -44,14 +42,12 @@ const App = () => {
       setSound(alarmSound);
     });
 
-    // Create the notification channel
     PushNotification.createChannel(
       {
         channelId: 'alarm-channel',
         channelName: 'Alarm Channel',
         channelDescription: 'A channel for alarm notifications',
         playSound: true,
-        allowWhileIdle: true,
         soundName: 'alarm.mp3',
         importance: 4,
         vibrate: true,
@@ -70,55 +66,21 @@ const App = () => {
     PushNotification.configure({
       onNotification: function(notification) {
         handleNotification(notification);
-        console.log('Received Notification:', notification);
         if (notification.userInfo && notification.userInfo.action === 'PLAY_ALARM') {
-          showAlarmPopup()
-          console.log('Handling PLAY_ALARM action');
-          Alert.alert(
-            'Alarm',
-            'It is time to wake up!',
-            [
-              {
-                text: 'Dismiss',
-                onPress: () => console.log('Dismissed alarm'),
-                style: 'cancel',
-              },
-            ],
-            { cancelable: false }
-          );
+          showAlarmPopup();
         }
         notification.finish(PushNotification.FetchResult.NoData);
       },
       requestPermissions: Platform.OS === 'ios',
       popInitialNotification: true,
     });
-    
+
     RNForegroundService.start({
       id: 1,
       title: 'Alarm Service',
       message: 'Running',
       vibration: false,
     });
-    
-
-
-  
-    // Configure push notification
-    // PushNotification.configure({
-    //   onNotification: function (notification) {
-    //     handleNotification(notification);
-    //   },
-    //   popInitialNotification: true,
-    //   requestAlarmPermission: Platform.OS === 'ios',
-    // });
-    // Configure push notification
-    // PushNotification.configure({
-    //   onNotification: handleNotification,
-    //   popInitialNotification: true,
-    //   requestAlarmPermission: Platform.OS === 'ios',
-    // });
-
-    // Handle incoming notifications while app is in foreground
 
     loadAlarmSchedule();
     return () => {
@@ -129,7 +91,6 @@ const App = () => {
   }, []);
 
   const handleNotification = notification => {
-    // display popup or take action based on the notification
     if (
       notification.channelId === 'alarm-channel' &&
       notification.userInfo?.action === 'PLAY_ALARM'
@@ -138,13 +99,10 @@ const App = () => {
     }
   };
 
-  // setAlarm();
-
   const showAlarmPopup = () => {
-    // display modal or alert
     Alert.alert(
       'Alarm',
-      'wake up It is time to start your day',
+      'Wake up! It is time to start your day',
       [
         {
           text: 'Cancel Alarm',
@@ -198,11 +156,9 @@ const App = () => {
       return;
     }
 
-    // Adjust for 'Asia/Dhaka' time zone (UTC+6)
     const notificationMoment = moment(date).tz('Asia/Dhaka');
     const notificationDate = notificationMoment.toDate();
 
-    // Save Schedule date to AsyncStorage
     try {
       await AsyncStorage.setItem('alarmSchedule', notificationDate.toString());
       console.log('AlarmSchedule:', notificationDate.toString());
@@ -221,7 +177,6 @@ const App = () => {
       userInfo: {action: 'PLAY_ALARM'},
     });
 
-    // strat foreground service
     if (Platform.OS === 'android') {
       RNForegroundService.start({
         id: 1,
@@ -230,12 +185,10 @@ const App = () => {
         vibration: false,
       });
     }
-    // Calculate delay for playing sound
+
     const now = moment().tz('Asia/Dhaka');
     const delayInMillis = notificationMoment.diff(now);
-    console.log('delayInMilis++++++++++++++++++++++++', delayInMillis);
 
-    // Schedule playing sound after delay
     const id = BackgroundTimer.setTimeout(() => {
       playSound();
       setPlayVideo(true);
@@ -244,7 +197,6 @@ const App = () => {
     setAlarmSet(true);
     console.log('Notification Date:', notificationDate);
     return delayInMillis;
-    // return notificationDate
   };
 
   const playSound = () => {
@@ -263,9 +215,7 @@ const App = () => {
 
   const handleSetAlarm = async () => {
     const delay = await scheduleNotification();
-    console.log('=====================> Delay', delay);
-    // AlarmModule.setAlarm();
-    AlarmSchedulerModule.scheduleAlarm(delay);
+    AlarmScheduler.scheduleAlarm(delay, 'Wake up! It is time to start your day', showAlarmPopup());
   };
 
   const cancelAlarm = async () => {
@@ -276,24 +226,20 @@ const App = () => {
       setAlarmSet(false);
       if (sound) {
         sound.stop(() => {
-          console.log('sound stop');
+          console.log('Sound stopped');
         });
       }
       if (Platform.OS === 'android') {
         RNForegroundService.stop();
       }
     }
-    PushNotification.cancellAllLocalNotifications();
-    AlarmSchedulerModule.cancelAlarm();
-    // Remove schedule date from AsyncStorage
+    PushNotification.cancelAllLocalNotifications();
+    AlarmScheduler.cancelAlarm();
     try {
       await AsyncStorage.removeItem('alarmSchedule');
       console.log('Alarm schedule removed from local storage');
     } catch (error) {
-      console.error(
-        'eroor removing alarm sehcedule from local storage:',
-        error,
-      );
+      console.error('Error removing alarm schedule from local storage:', error);
     }
   };
 
@@ -304,10 +250,10 @@ const App = () => {
         const scheduleDate = new Date(storedSchedule);
         setDate(scheduleDate);
         setAlarmSet(true);
-        console.log('loadded alarm schedule from local storage:');
+        console.log('Loaded alarm schedule from local storage:', scheduleDate);
       }
     } catch (error) {
-      console.error('error loading alarm schedule from local storage:', error);
+      console.error('Error loading alarm schedule from local storage:', error);
     }
   };
 
@@ -324,21 +270,18 @@ const App = () => {
           onChange={onChange}
         />
       )}
-      <View
-        style={{flexDirection: 'row', gap: 5, paddingVertical: height * 0.02}}>
+      <View style={{flexDirection: 'row', gap: 5, paddingVertical: height * 0.02}}>
         <Button title="Set Alarm" onPress={handleSetAlarm} />
         <Button title="Cancel Alarm" onPress={cancelAlarm} />
       </View>
       {alarmSet && (
         <Text style={styles.message}>
-          Alarm set for{' '}
-          {moment(date).tz('Asia/Dhaka').format('YYYY-MM-DD HH:mm:ss')}
+          Alarm set for {moment(date).tz('Asia/Dhaka').format('YYYY-MM-DD HH:mm:ss')}
         </Text>
       )}
       {playVideo && (
         <Video
           source={ScheduleVideo}
-          // source={{uri: '/assets/appVideo.mp4'}}
           style={styles.video}
           onEnd={() => setPlayVideo(false)}
           repeat={false}

@@ -38,7 +38,7 @@
         <meta-data android:name="com.dieam.reactnativepushnotification.notification_color" android:resource="@color/white" />
 
         <!-- Alarm receiver -->
-        <receiver android:name=".AlarmReceiver" android:exported="true" />
+        <receiver android:name=".AlarmReceiver" android:exported="false" />
         
         <!-- Boot receiver to reschedule alarms after reboot -->
         <receiver android:name=".BootReceiver" android:exported="true">
